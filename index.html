@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>페어틀 만들기</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="vendor/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.8.1/dist/css/justifiedGallery.min.css">
+    <link 
+    rel="stylesheet" 
+    crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
+
+    <link rel="icon" href="favicon/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="favicon/site.webmanifest" />
+    <meta name="robots" content="noindex, nofollow">
+    <!-- 
+    <meta name="--배고픔 페어틀 사이트" content="페어틀을 만들 수 있는 사이트입니다." /> -->
+</head>
+<body>
+    <nav class="site-nav" aria-label="바로가기">
+        <a href="https://x.com/baegop157902" class="nav-item" target="_blank" rel="noopener noreferrer">
+            <span class="nav-icon" aria-hidden="true"><i class="bi bi-twitter-x"></i></span>
+            <span>Twitter(X)</span>
+        </a>
+        <a href="#bug-dialog" class="nav-item" data-open-dialog="bug-dialog">
+            <span class="nav-icon" aria-hidden="true"><i class="bi bi-bug"></i></span>
+            <span>버그&문의</span>
+        </a>
+        <a href="#guide-dialog" class="nav-item" data-open-dialog="guide-dialog">
+            <span class="nav-icon" aria-hidden="true"><i class="bi bi-card-text"></i></span>
+            <span>이용 안내</span>
+        </a>
+    </nav>
+
+    <main class="main-page">
+        <section class="intro">
+            <h1>페어틀 만들자!</h1>
+            <p>
+                편집 프로그램 없이 페어틀을 채워보세요!<br>
+                심심할때마다 하나씩 추가됩니다...
+            </p>
+        </section>
+
+        <section id="template-gallery" aria-label="페어틀 목록">
+            <a href="editor.html?id=2p-simple" class="template-card">
+                <img src="images/2psimple-1.png" alt="심플 페어정리">
+                <span class="template-tag template-tag--red">#자료정리</span>
+                <strong class="template-title">심플 페어정리</strong>
+            </a>
+            <a href="editor.html?id=2p-pair1" class="template-card">
+                <img src="images/sample2.png" alt="배고픔 페어정리1">
+                <span class="template-tag template-tag--red">#자료정리</span>
+                <strong class="template-title">배고픔 페어정리1</strong>
+            </a>
+            <a href="editor.html?id=pattern-header" class="template-card">
+                <img src="images/sample3.png" alt="패턴 헤더">
+                <span class="template-tag template-tag--green">#헤더</span>
+                <strong class="template-title">패턴 헤더</strong>
+            </a>
+        </section>
+    </main>
+
+    <dialog class="site-dialog form-dialog" id="bug-dialog" aria-labelledby="bug-dialog-title">
+        <button class="floating-close" type="button" data-close-dialog aria-label="버그 및 문의 창 닫기">
+            <i class="bi bi-x" aria-hidden="true"></i>
+        </button>
+        <h2 id="bug-dialog-title">버그&문의</h2>
+        <div class="google-form-container">
+            <iframe
+                title="버그 및 문의 구글 설문"
+                data-src="https://docs.google.com/forms/d/e/1FAIpQLSeHtrAZlBQN_kygzjLDFZbH5HMK6pqqz6KWiFr5lF22F3HuWA/viewform?embedded=true"
+                width="640" height="503" frameborder="0" marginheight="0" marginwidth="0">
+                로드 중…
+            </iframe>
+        </div>
+    </dialog>
+
+    <dialog class="site-dialog guide-dialog" id="guide-dialog" aria-labelledby="guide-dialog-title">
+        <button class="floating-close" type="button" data-close-dialog aria-label="이용 안내 창 닫기">
+            <i class="bi bi-x" aria-hidden="true"></i>
+        </button>
+        <h2 id="guide-dialog-title">이용 안내</h2>
+        <div class="guide-content">
+            <section>
+                <h3>제 1장. 개인정보 처리방침</h3>
+                <ol>
+                    <li>개인정보 수집 및 이용<br>페어틀 만들기는 회원가입 절차가 없으며, 사용자의 이름, 이메일, 연락처 등 개인을 식별할 수 있는 어떠한 개인정보도 서버로 전송하거나 수집하지 않습니다.</li>
+                    <li>작업 데이터 저장<br>사용자가 캔버스에서 작업 중인 이미지 내역과 설정값은 사용자의 기기 브라우저(로컬 스토리지 및 캐시)에 임시로 저장됩니다. 브라우저 캐시를 삭제하거나 시크릿 모드를 사용할 경우 작업 내역은 영구적으로 삭제되며, 운영자는 사용자의 작업물에 일절 접근할 수 없습니다.</li>
+                    <li>웹 분석 도구 사용(쿠키 미수집)<br>본 웹사이트는 서비스 개선과 단순 트래픽 통계(방문자 수, 페이지 조회 등)를 확인하기 위해 Cloudflare Web Analytics를 사용합니다. 해당 도구는 방문자를 식별하는 개인정보를 수집하지 않으며, 사용자 기기에 추적용 쿠키(Cookie)를 저장하지 않는 쿠키리스(Cookieless) 방식으로 안전하게 운영됩니다.</li>
+                </ol>
+            </section>
+            <section>
+                <h3>제 2장. 서비스 이용약관</h3>
+                <ol>
+                    <li>데이터 유실에 대한 면책 (책임 제한)<br>본 서비스의 모든 작업 상태는 사용자 기기의 로컬 환경에 의존하여 저장됩니다. 기기 변경, 브라우저 캐시 삭제, 예상치 못한 오류 등으로 인해 발생하는 작업 데이터 유실에 대해 운영자는 어떠한 책임도 지지 않습니다. 완성되거나 중요한 작업물은 반드시 사용자의 기기에 다운로드나 내보내기 기능을 이용해 파일로 다운로드하여 백업하시기 바랍니다.</li>
+                    <li>저작권 및 사용 책임<br>페어틀 만들기를 이용해 생성한 결과물과, 작업 시 사용자가 직접 업로드한 이미지(초상권, 저작권, 상표권 등 포함)에 대한 모든 법적 책임은 사용자 본인에게 있습니다. 타인의 권리를 침해하는 이미지를 생성하여 발생하는 문제에 대해 운영자는 책임지지 않습니다.</li>
+                    <li>약관의 변경 본 약관과 개인정보 처리방침은 서비스 업데이트나 법령 변경에 따라 수정될 수 있으며, 내용이 변경될 경우 사이트 하단을 통해 고지합니다.</li>
+                </ol>
+            </section>
+            <section>
+                <h3>업데이트 내역</h3>
+                <ol>
+                    <li>Ver: 1.0.0 (updated 2026.09.14)<br>사이트를 게시했습니다.</li>
+                </ol>
+            </section>
+        </div>
+    </dialog>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.8.1/dist/js/jquery.justifiedGallery.min.js"></script>
+    <script>
+        const mobileQuery = window.matchMedia('(max-width: 768px)');
+
+        function updateGallery() {
+            const $gallery = $('#template-gallery');
+
+            if (mobileQuery.matches) {
+                if ($gallery.data('jg.controller')) {
+                    $gallery.justifiedGallery('destroy');
+                }
+                return;
+            }
+
+            $gallery.justifiedGallery({
+                rowHeight: 208,
+                maxRowHeight: 208,
+                margins: 12,
+                border: 0,
+                lastRow: 'nojustify',
+                captions: false,
+                cssAnimation: true
+            });
+        }
+
+        $(updateGallery);
+        if (mobileQuery.addEventListener) {
+            mobileQuery.addEventListener('change', updateGallery);
+        } else {
+            mobileQuery.addListener(updateGallery);
+        }
+    </script>
+    <script src="js/script.js"></script>
+</body>
+</html>
