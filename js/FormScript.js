@@ -219,7 +219,7 @@ export function createForms(store,stickers,eyedropper) {
     }
     host.append(tabs);const panel=document.createElement('div');panel.className='mobile-field-panel';panel.id='active-fields';panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','tab-'+side);host.append(panel);
     if(getTabs().find(t=>t.id===side)?.type==='stickers'){
-      const title=document.createElement('h3');title.textContent='스티커 목록';const note=document.createElement('p');note.textContent='위 캔버스에서 이동·크기 조절·회전할 수 있어요.';
+      const title=document.createElement('h3');title.textContent='스티커 목록';const note=document.createElement('p');note.textContent='☰ 버튼을 눌러 레이어를 조절 할 수 있어요.';
       const list=document.createElement('div');list.className='sticker-list';panel.append(title,note,list);renderStickerList();mobileCleanup=()=>{};
     }else{
       const categories=document.createElement('div');categories.className='field-categories';categories.setAttribute('aria-label','입력 항목');

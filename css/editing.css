@@ -70,11 +70,67 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .sticker-shadow-toggle { padding: 6px 10px; border: 1px solid #bbb; border-radius: 999px; background: white; color: #333; font-size: 12px; white-space: nowrap; }
 .sticker-shadow-toggle[aria-pressed="true"] { background: #333; color: white; }
 .sticker-shadow-canvas { position: fixed; z-index: 140; }
+.sticker-layer-btn { 
+  position: fixed; 
+  z-index: 145; 
+  width: 28px; 
+  height: 28px; 
+  padding: 0; 
+  border: 0; 
+  border-radius: 50%; 
+  background: white; 
+  color: #333; 
+  font-size: 24px; 
+  line-height: 1; 
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  display: grid; 
+  place-items: center; 
+}
+.sticker-layer-btn:hover {
+  color: #000;
+}
+.sticker-layer-btn.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.sticker-layer-btn .bi::before { display: block; line-height: 1; vertical-align: 0; }
+.sticker-drag-handle {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 10;
+    color: #333;
+    font-size: 20px;
+    touch-action: none; /* 모바일 터치 스크롤 튀는 현상 방지 */
+    transition: background 0.2s;
+}
+.sticker-drag-handle:active {
+    cursor: grabbing;
+}
+/* 드래그 중인 카드 (살짝 커지고 기울어지는 모션) */
+.sticker-card.is-dragging {
+    box-shadow: 0 15px 35px rgba(0,0,0,0.25) !important;
+    opacity: 0.95;
+    transform: scale(1.05) rotate(2deg); 
+    transition: transform 0.1s ease-out !important;
+}
+/* 카드가 들어갈 빈자리 표시 영역 */
+.drag-placeholder {
+    background: rgba(0,0,0,0.03) !important;
+    border: 2px dashed #a0abbd !important;
+    box-shadow: none !important;
+}
 .image-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .image-upload:focus-within { outline: 3px solid #476ce4; outline-offset: 3px; }
 .image-remove { display: block; margin: 12px auto 0; padding: 5px 8px; border: 0; background: transparent; font-size: 12px; color: #666; text-decoration: underline; }
 .field-menu > button { margin: 4px; padding: 7px; border: 1px solid #ccc; border-radius: 8px; background: #f6f6f6; }
-.sticker-canvas-delete { position: fixed; z-index: 150; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: #ff2424; color: white; font-size: 22px; line-height: 1; }
+.sticker-canvas-delete { position: fixed; z-index: 145; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: #ff2424; color: white; font-size: 22px; line-height: 1; }
 .editor-drag-handle { cursor: grab; touch-action: none; user-select: none; }
 .editor-drag-handle:active { cursor: grabbing; }
 .slot-name { width: 100%; border: 0; border-bottom: 1px solid #ddd; padding: 6px 0; background: transparent; font: inherit; font-weight: 700; }
