@@ -6,7 +6,7 @@ export const size = {
 };
 
 export const tabs = [
-    { id: 'common', label: '패턴이미지', heading: '패턴이미지' },
+    { id: 'common', label: '메인', heading: '메인' },
     { id: 'stickers', label: '스티커', type: 'stickers' }
 ];
 
@@ -60,7 +60,10 @@ export function fields(side, group) {
 
     if (group === 'img') {
         return [
+            field('img-is-pattern', '패턴', 'checkbox'), // 최상단 패턴 토글 버튼
             { ...field('img-scale', '이미지 크기', 'number'), min: 0, max: 200 },
+            { ...field('img-x', '가로 위치', 'number'), min: 0, max: 100 }, // 위치 슬라이더
+            { ...field('img-y', '세로 위치', 'number'), min: 0, max: 100 }, // 위치 슬라이더
             { ...field('img-rotation', '이미지 회전', 'number'), min: -180, max: 180 },
             { ...field('img-opacity', '이미지 투명도', 'number'), min: 0, max: 100 },
             field('img-blur', '이미지 블러', 'checkbox')
@@ -86,6 +89,13 @@ export function initialState(id = templateId) {
         'common-img-scale': 100,
         'common-img-rotation': 0,
         'common-img-opacity': 100,
+        'common-img-blur': false,
+        'common-img-is-pattern': true, 
+        'common-img-scale': 100,
+        'common-img-x': 50,
+        'common-img-y': 50,
+        'common-img-rotation': 0,
+        'common-img-opacity': 100,
         'common-img-blur': false
     };
 
@@ -98,6 +108,8 @@ export function initialState(id = templateId) {
         stickers: []
     };
 }
+
+let savedEditorPosition = null; // 에디터 위치를 기억할 전역 변수
 
 function injectCustomUI(openEditor) {
     if (document.getElementById('pattern-header-style')) return;
@@ -137,6 +149,14 @@ function injectCustomUI(openEditor) {
 
         const floatingEditor = document.querySelector('section.floating-editor');
         if (floatingEditor) {
+            // 🔥 화면이 다시 그려질 때 저장된 위치가 있다면 즉시 복구합니다.
+            if (savedEditorPosition) {
+                floatingEditor.style.left = savedEditorPosition.left;
+                floatingEditor.style.top = savedEditorPosition.top;
+                floatingEditor.style.transform = savedEditorPosition.transform;
+                savedEditorPosition = null; 
+            }
+
             floatingEditor.classList.toggle('is-pattern-editor', isPatternEditor);
 
             if (isPatternEditor) {
@@ -149,13 +169,25 @@ function injectCustomUI(openEditor) {
                     btnPattern.type = 'button';
                     btnPattern.className = 'pc-custom-tab-btn';
                     btnPattern.textContent = '패턴';
-                    btnPattern.onclick = () => { if (!isPattern) openEditor('common', 'pattern'); };
+                    btnPattern.onclick = () => { 
+                        if (!isPattern) { 
+                            // 탭 이동 직전 위치 기억
+                            savedEditorPosition = { left: floatingEditor.style.left, top: floatingEditor.style.top, transform: floatingEditor.style.transform };
+                            openEditor('common', 'pattern'); 
+                        } 
+                    };
 
                     const btnImg = document.createElement('button');
                     btnImg.type = 'button';
                     btnImg.className = 'pc-custom-tab-btn';
                     btnImg.textContent = '이미지';
-                    btnImg.onclick = () => { if (!isImg) openEditor('common', 'img'); };
+                    btnImg.onclick = () => { 
+                        if (!isImg) { 
+                            // 탭 이동 직전 위치 기억
+                            savedEditorPosition = { left: floatingEditor.style.left, top: floatingEditor.style.top, transform: floatingEditor.style.transform };
+                            openEditor('common', 'img'); 
+                        } 
+                    };
 
                     tabsContainer.append(btnPattern, btnImg);
 
@@ -174,11 +206,14 @@ function injectCustomUI(openEditor) {
 
         if (!isPatternEditor) return;
 
+        // 🔥 새 슬라이더 2종(img-x, img-y) 추가
         const targets = [
             { id: 'common-pattern-scale', min: 0, max: 200 },
             { id: 'common-pattern-rotation', min: -180, max: 180 },
             { id: 'common-pattern-opacity', min: 0, max: 100 },
             { id: 'common-img-scale', min: 0, max: 200 },
+            { id: 'common-img-x', min: 0, max: 100 }, // 가로위치
+            { id: 'common-img-y', min: 0, max: 100 }, // 세로위치
             { id: 'common-img-rotation', min: -180, max: 180 },
             { id: 'common-img-opacity', min: 0, max: 100 }
         ];
@@ -236,7 +271,6 @@ function injectCustomUI(openEditor) {
             }
         });
 
-        // 단색 모드 슬라이더 및 블러 버튼 숨김
         const modeRadios = document.querySelectorAll('input[name="common-pattern-mode"]');
         if (modeRadios.length > 0) {
             const selectedMode = Array.from(modeRadios).find(r => r.checked)?.value;
@@ -384,12 +418,42 @@ export function createScene(stage, openEditor) {
         imgRect.clearCache();
         silhouetteRect.clearCache();
 
+        const iIsPattern = currentValues['common-img-is-pattern'] ?? true;
+        const iX = currentValues['common-img-x'] ?? 50; 
+        const iY = currentValues['common-img-y'] ?? 50;
+
         imgRect.opacity(iOpacity);
         imgRect.fillPatternRotation(iRotation);
         imgRect.fillPatternScale({ x: iScale, y: iScale });
 
         silhouetteRect.fillPatternRotation(iRotation);
         silhouetteRect.fillPatternScale({ x: iScale, y: iScale });
+        
+        const img = imgRect.fillPatternImage();
+        if (img) {
+            // 🔥 패턴 체크박스에 따른 반복(repeat) 여부 설정
+            const repeatMode = iIsPattern ? 'repeat' : 'no-repeat';
+            imgRect.fillPatternRepeat(repeatMode);
+            silhouetteRect.fillPatternRepeat(repeatMode);
+
+            // 스케일 값이 작을 때 화면 밖으로 도망가는 것을 막기 위한 안전장치
+            const safeScale = iScale || 0.01;
+            
+            // 타일 모드일 때는 기본 offset이 캔버스 중심, 단일 이미지일 때는 이미지 중심을 캔버스 중앙에 맞춤
+            const baseOffsetX = iIsPattern ? size.width / 2 : (img.width / 2 - (size.width / 2) / safeScale);
+            const baseOffsetY = iIsPattern ? size.height / 2 : (img.height / 2 - (size.height / 2) / safeScale);
+
+            // 슬라이더 이동값 계산 (50을 기준으로 ±이동, 스케일 비율에 맞춰 일정한 속도감 유지)
+            const moveX = (50 - iX) * (size.width / 50) / safeScale;
+            const moveY = (50 - iY) * (size.height / 50) / safeScale;
+
+            // 최종 위치 적용
+            imgRect.fillPatternOffsetX(baseOffsetX + moveX);
+            imgRect.fillPatternOffsetY(baseOffsetY + moveY);
+            
+            silhouetteRect.fillPatternOffsetX(baseOffsetX + moveX);
+            silhouetteRect.fillPatternOffsetY(baseOffsetY + moveY);
+        }
         
         //
         if (iBlur && imgRect.fillPatternImage()) {
