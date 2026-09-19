@@ -2,6 +2,7 @@ import { attachColorPicker } from './ColorPicker.js';
 import { cropImage } from './Cropper.js';
 import { readImage, notify } from './state.js';
 import { createKeyboardBar } from './KeyboardBar.js';
+import { createRichTextField } from './RichText.js';
 
 export function createForms(store,stickers,eyedropper) {
   const definition=store.definition;
@@ -86,6 +87,9 @@ export function createForms(store,stickers,eyedropper) {
     {
       const rows=new Map();
       for(const field of fieldItems) {
+        if(field.type==='richtext'){
+          const rich=createRichTextField(store,field);body.append(rich.body);cleanups.push({mount:()=>rich.mount()});continue;
+        }
         if(field.type==='radio'){
           const section=document.createElement('fieldset');section.className='field-radio';
           const legend=document.createElement('legend');legend.textContent=field.label;

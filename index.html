@@ -110,6 +110,11 @@
                 <span class="template-tag template-tag--red">#자료정리</span>
                 <strong class="template-title">다인 자료틀(1~30명)</strong>
             </a>
+            <a href="editor.html?id=main-tweet" class="template-card">
+                <img src="images/main-tweet-1.png" alt="메인트 자료틀">
+                <span class="template-tag template-tag--purple">#메인트</span>
+                <strong class="template-title">메인트 생성기</strong>
+            </a>
         </section>
     </main>
 
@@ -119,12 +124,19 @@
         </button>
         <h2 id="bug-dialog-title">버그&문의</h2>
         <div class="google-form-container">
+            <div class="google-form-loading" role="status">
+                로드 중…
+            </div>
+
             <iframe
                 title="버그 및 문의 구글 설문"
                 data-src="https://docs.google.com/forms/d/e/1FAIpQLSeHtrAZlBQN_kygzjLDFZbH5HMK6pqqz6KWiFr5lF22F3HuWA/viewform?embedded=true"
-                width="640" height="503" frameborder="0" marginheight="0" marginwidth="0">
-                로드 중…
-            </iframe>
+                width="640"
+                height="503"
+                frameborder="0"
+                marginheight="0"
+                marginwidth="0"
+            ></iframe>
         </div>
     </dialog>
 
@@ -191,6 +203,29 @@
         } else {
             mobileQuery.addListener(updateGallery);
         }
+
+        const bugDialog = document.querySelector("#bug-dialog");
+        const formIframe = bugDialog.querySelector("iframe");
+        const loadingMessage = bugDialog.querySelector(".google-form-loading");
+
+        function loadGoogleForm() {
+        // 이미 불러왔다면 다시 로드하지 않음
+        if (formIframe.getAttribute("src")) return;
+
+        formIframe.addEventListener(
+            "load",
+            () => {
+            loadingMessage.hidden = true;
+            },
+            { once: true }
+        );
+
+        formIframe.src = formIframe.dataset.src;
+        }
+
+        document.querySelectorAll('[data-open-dialog="bug-dialog"]').forEach(button => {
+            button.addEventListener("click", loadGoogleForm);
+        });
     </script>
     <script>
         document.querySelectorAll(".random-thumbnail").forEach(image => {

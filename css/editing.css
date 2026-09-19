@@ -335,9 +335,9 @@ dialog button, .import-file { padding: 9px 12px; border: 1px solid #ccc; border-
 .canvas-add-member:disabled, .character-tab-action:disabled { opacity: .4; cursor: default; }
 .desktop-member-navigation select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; }
 .multi-character-editor.floating-editor { width: 360px; }
-:is(.multi-character-editor,.is-pattern-editor) .desktop-field-categories { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
-:is(.multi-character-editor,.is-pattern-editor) .desktop-field-categories button { padding: 6px 16px; border: 1px solid #b6bfca; border-radius: 20px; background: linear-gradient(135deg, rgba(255,255,255,.6), rgba(216,223,232,.5)); color: #252b33; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 2px 5px rgba(35,43,58,.045); font-size: 13px; cursor: pointer; transition: background .2s; white-space: nowrap; }
-:is(.multi-character-editor,.is-pattern-editor) .desktop-field-categories button[aria-pressed="true"] { background: #dfe4eb; }
+:is(.multi-character-editor,.is-pattern-editor,.main-tweet-editor) .desktop-field-categories { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+:is(.multi-character-editor,.is-pattern-editor,.main-tweet-editor) .desktop-field-categories button { padding: 6px 16px; border: 1px solid #b6bfca; border-radius: 20px; background: linear-gradient(135deg, rgba(255,255,255,.6), rgba(216,223,232,.5)); color: #252b33; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 2px 5px rgba(35,43,58,.045); font-size: 13px; cursor: pointer; transition: background .2s; white-space: nowrap; }
+:is(.multi-character-editor,.is-pattern-editor,.main-tweet-editor) .desktop-field-categories button[aria-pressed="true"] { background: #dfe4eb; }
 .field-inline-row { display: flex; gap: 12px; margin-bottom: 14px; }
 .field-inline-row .field-row { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; margin: 0; align-items: center; }
 .field-inline-row .field-row > span { width: auto; white-space: nowrap; }
@@ -383,3 +383,22 @@ dialog button, .import-file { padding: 9px 12px; border: 1px solid #ccc; border-
   .member-detail-view #konva-container { visibility: hidden; pointer-events: none; }
   .multi-character-canvas .member-preview { left: 50%; top: calc(50% - 20px); bottom: auto; transform: translate(-50%,-50%); box-shadow: none; }
 }
+/* main-tweet: 선택 영역 서식 편집 */
+.floating-editor.main-tweet-editor { width: 410px; }
+.rich-text-field { min-width: 0; }
+.rich-text-toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.rich-text-toolbar button,.rich-text-color { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 5px 10px; border: 1px solid #bbb; border-radius: 6px; background: #fff; color: #333; font-size: 13px; cursor: pointer; }
+.rich-text-toolbar button { font-weight: 700; }
+.rich-text-toolbar button[aria-pressed="true"] { background: #dfe4eb; border-color: #8494ab; }
+.rich-text-color input[type=color] { width: 24px; height: 24px; padding: 0; border: 0; cursor: pointer; }
+.rich-text-editor { min-height: 170px; max-height: 40dvh; overflow-y: auto; padding: 12px; border: 1px solid #c9c9c9; border-radius: 6px; background: #fff; color: #363636; font-family: 'Apple SD Gothic Neo',sans-serif; font-size: 16px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; cursor: text; }
+.rich-text-editor:focus { outline: 2px solid #b6c8e5; }
+.rich-text-note { font-size: 12px; line-height: 1.5; color: #777; margin: 8px 0; }
+.keyboard-bar-rich .keyboard-bar-row { padding: 26px 12px 10px; border: 1px solid #aaa; border-radius: 14px; background: #f7f8fa; }
+.keyboard-bar-rich .keyboard-bar-done { top: 1px; right: 4px; transform: none; }
+.keyboard-bar-rich .rich-text-toolbar { padding: 4px 40px 8px 0; }
+.keyboard-bar-rich .rich-text-editor { min-height: 64px; max-height: min(180px,28dvh); }
+.keyboard-bar-rich .rich-text-note { display: none; }
+.keyboard-bar-rich .rich-text-color input[type=color] { display: inline-block; width: 24px; height: 24px; padding: 0; border-radius: 0; }
+
+.main-tweet-editor .desktop-field-categories { flex-wrap: wrap; }

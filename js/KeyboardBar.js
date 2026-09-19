@@ -1,5 +1,6 @@
 export function createKeyboardBar(host){
   const mobile=matchMedia('(max-width:768px)'),viewport=window.visualViewport;
+  const compact=matchMedia('(max-width:1024px)');
   const bar=document.createElement('section');bar.className='keyboard-bar';bar.hidden=true;bar.setAttribute('aria-label','모바일 텍스트 입력');
   
   // 🔥 [핵심 수정 1] 렌더링 렉을 없애기 위해 가로폭을 여기서 단 한 번만 100%로 고정합니다.
@@ -54,32 +55,34 @@ export function createKeyboardBar(host){
     current.input.removeEventListener('input',fitText);
     current.input.style.height=current.height;
     if(current.rows!==null)current.input.setAttribute('rows',current.rows);
-    if(current.placeholder.isConnected)current.placeholder.replaceWith(current.input);else current.input.remove();
+    if(current.placeholder.isConnected)current.placeholder.replaceWith(current.moved);else current.moved.remove();
     current.input.blur();bar.hidden=true;document.body.classList.remove('keyboard-editing');
   }
   function open(input){
     if(active?.input===input)return;close();
-    const label=input.closest('.field-row')?.querySelector('span')?.textContent || input.placeholder || '텍스트';
+    const rich=input.hasAttribute('data-rich-editor');
+    const label=input.getAttribute('aria-label')||input.closest('.field-row')?.querySelector('span')?.textContent || input.placeholder || '텍스트';
     const placeholder=document.createElement('span');placeholder.className='keyboard-input-placeholder';placeholder.textContent='작성 중';
     const start=input.selectionStart,end=input.selectionEnd;
-    active={input,placeholder,height:input.style.height,rows:input.getAttribute('rows')};baseline=viewport?.height||innerHeight;sawKeyboard=false;
-    title.textContent=label;input.setAttribute('aria-label',label);input.replaceWith(placeholder);
-    bar.hidden=false;row.prepend(input);document.body.classList.add('keyboard-editing');
+    const saved=rich?input.richSelection?.capture():null,moved=rich?input.closest('.rich-text-field'):input;
+    active={input,moved,placeholder,height:input.style.height,rows:input.getAttribute('rows')};baseline=viewport?.height||innerHeight;sawKeyboard=false;
+    title.textContent=label;input.setAttribute('aria-label',label);moved.replaceWith(placeholder);
+    bar.hidden=false;bar.classList.toggle('keyboard-bar-rich',rich);row.prepend(moved);document.body.classList.add('keyboard-editing');
     if(input.tagName==='TEXTAREA')input.rows=1;
     input.addEventListener('input',fitText);fitText();position();
-    input.focus({preventScroll:true});if(start!==null)input.setSelectionRange(start,end);schedule();
+    input.focus({preventScroll:true});if(rich)input.richSelection?.restore(saved);else if(start!=null)input.setSelectionRange(start,end);schedule();
   }
 
   bar.addEventListener('keydown', e => {
     if (!active) return;
     if (e.key === 'Enter') {
-      if (active.input.tagName !== 'TEXTAREA') {
+      if (active.input.tagName !== 'TEXTAREA'&&!active.input.hasAttribute('data-rich-editor')) {
         e.preventDefault();
         close();
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const focusables = Array.from(host.querySelectorAll('input[type="text"], textarea, .keyboard-input-placeholder'))
+      const focusables = Array.from(host.querySelectorAll('input[type="text"], textarea, [data-rich-editor], .keyboard-input-placeholder'))
         .filter(el => el === active.placeholder || el.offsetParent !== null);
       const currentIndex = focusables.indexOf(active.placeholder);
       if (currentIndex !== -1) {
@@ -91,13 +94,14 @@ export function createKeyboardBar(host){
   });
 
   document.addEventListener('focusin',e=>{
-    if(mobile.matches&&host.contains(e.target)&&e.target.matches('input[type="text"],textarea, .image-citation-input, .sticker-citation-input'))open(e.target);
+    if(host.contains(e.target)&&((mobile.matches&&e.target.matches('input[type="text"],textarea, .image-citation-input, .sticker-citation-input'))||(compact.matches&&e.target.hasAttribute('data-rich-editor'))))open(e.target);
   });
   bar.addEventListener('focusout',()=>requestAnimationFrame(()=>{if(active&&!bar.contains(document.activeElement))close();}));
   done.onclick=close;
   viewport?.addEventListener('resize',schedule);viewport?.addEventListener('scroll',schedule);
   window.addEventListener('resize',schedule);
-  mobile.addEventListener('change',()=>{if(!mobile.matches)close();});
+  mobile.addEventListener('change',()=>{if(!mobile.matches&&!active?.input.hasAttribute('data-rich-editor'))close();});
+  compact.addEventListener('change',()=>{if(!compact.matches)close();});
   
   // 🔥 [핵심 수정 3] 무한 루프 렉을 유발하던 ResizeObserver 구문을 삭제합니다.
   

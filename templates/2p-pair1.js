@@ -105,6 +105,14 @@ export function fields(side, group) {
                     { value: 'image', label: '이미지' }
                 ]
             },
+            {
+                ...field('bg-check', '배경', 'checkbox'),
+                visibleWhen: { id: `${side}-bg-mode`, value: 'image' }
+            },
+            {
+                ...field('bg-color', '배경색', 'color'),
+                visibleWhen: { id: `${side}-bg-mode`, value: 'image' }
+            },
             field('blur', '배경 흐리게', 'checkbox')];
         case 'maininfo':
             return [
@@ -174,6 +182,8 @@ export function initialState(id = templateId) {
         'right-moe-image-citation': '',
 
         'common-bg-mode': 'light',
+        'common-bg-check': false,
+        'common-bg-color': '#ffffff',
         'common-blur': true,
         'common-pair-name': '페어명',
         'common-pair-name-background': '#ffffff',
@@ -258,7 +268,14 @@ export function createPairScene(stage, openEditor) {
         const img = mode === 'image' ? uploadedBackground : themeImages.get(mode);
         setImage(item, img);
         item.plus.visible(mode === 'image' && !img);
-        item.rect.fill(mode === 'dark' ? '#161616' : mode === 'image' ? '#1f1f1f' : '#ffffff');
+        const backgroundFill = mode === 'dark'
+            ? '#161616'
+            : mode === 'image'
+                ? currentValues['common-bg-check']
+                    ? currentValues['common-bg-color']
+                    : 'rgba(0,0,0,0)'
+                : '#ffffff';
+        item.rect.fill(backgroundFill);
 
         const isBlur = currentValues['common-blur'];
         if (isBlur && img) {
@@ -273,14 +290,17 @@ export function createPairScene(stage, openEditor) {
 
     let prevBgState = null;
 
-    // 기존 updateBackground 함수를 아래와 같이 수정
     function updateBackground(id, item) {
         if (id === 'common-bg-image') { 
-            // 현재 배경 모드와 블러 상태를 하나의 문자열로 결합하여 비교
-            const currentBgState = currentValues['common-bg-mode'] + '-' + currentValues['common-blur'];
+            const currentBgState = [
+                currentValues['common-bg-mode'],
+                currentValues['common-bg-check'],
+                currentValues['common-bg-color'],
+                currentValues['common-blur']
+            ].join('-');
             if (prevBgState !== currentBgState) {
                 refreshBackground(); 
-                prevBgState = currentBgState; // 상태 갱신
+                prevBgState = currentBgState;
             }
             return; 
         }
@@ -367,8 +387,8 @@ export function createPairScene(stage, openEditor) {
             y: p.height - 20, // 글자크기(14) + 하단여백(6) = 밑에서 20px 띄움
             align: isBg ? 'right' : 'center',
             fontSize: 14,
-            fontFamily: 'Pretendard', // (선택) 폰트가 빠져있어 복구했습니다.
-            fill: '#5f5f5f', // 회색 글자
+            fontFamily: 'Pretendard',
+            fill: '#5f5f5f',
             stroke: '#ffffff',
             strokeWidth: 2,
             fillAfterStrokeEnabled: true,

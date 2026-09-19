@@ -13,6 +13,9 @@ export const fonts = [
     'Grandiflora One',
     'Tektur',
     'Lilita One',
+    'GOFIRE',
+    'Top Speed',
+    'Orandakan Kana',
     'Iansui',
     'Dela Gothic One',
     'Kaisei Decol'
@@ -206,7 +209,6 @@ export function createPairScene(stage, openEditor) {
         const group = id.slice(side.length + 1).replace(/-image$/, '');
         const supported = ['profile', 'add-1', 'add-2', 'add-3'].includes(group);
         const hasImage = !!item.image.image();
-        // 업로드 전에는 기존 안내용 바탕을 유지합니다.
         const fill = !hasImage ? '#323232' : supported && currentValues[`${side}-${group}-background-enabled`]
             ? currentValues[`${side}-${group}-background-color`] : supported ? 'rgba(0,0,0,0)' : null;
         item.rect.fill(fill);
@@ -277,8 +279,8 @@ export function createPairScene(stage, openEditor) {
             y: p.height - 20, // 글자크기(14) + 하단여백(6) = 밑에서 20px 띄움
             align: 'center',
             fontSize: 14,
-            fontFamily: 'Pretendard', // (선택) 폰트가 빠져있어 복구했습니다.
-            fill: '#5f5f5f', // 회색 글자
+            fontFamily: 'Pretendard',
+            fill: '#5f5f5f',
             stroke: '#ffffff',
             strokeWidth: 2,
             fillAfterStrokeEnabled: true,
@@ -396,7 +398,7 @@ export function createPairScene(stage, openEditor) {
         text({
             x,
             y: 122,
-            width: 424,
+            width: 430,
             fontSize: 48,
             fontStyle: '800',
             wrap: 'none',
@@ -578,11 +580,14 @@ export const fontLabels = {
     'Grandiflora One': '[한영] 능소화',
     'Tektur': '[영] Tektur',
     'Lilita One': '[영] Lilita One',
+    'GOFIRE': '[영] GOFIRE',
+    'Top Speed': '[영] Top Speed',
+    'Orandakan Kana': '[영] Orandakan Kana',
     'Iansui': '[영일] Iansui',
     'Dela Gothic One': '[영일중] Dela Gothic One',
     'Kaisei Decol': '[영일중] Kaisei Decol'
 };
-// 배열 순서가 화면의 탭 순서입니다. id는 fields/좌표/기본값에서 쓰는 ID와 맞춥니다.
+
 export const tabs = [{
         id: 'left',
         label: '왼쪽 캐릭터',

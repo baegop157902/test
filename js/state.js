@@ -75,6 +75,7 @@ export async function validateState(raw,definition) {
     next.values[key]=value;
     next.touched[key]=raw.touched ? raw.touched[key]===true : true;
   }
+  definition.restoreFormatting?.(raw,next);
   for(const key of Object.keys(positions))if(raw.images[key]) {
     await decodeImage(raw.images[key]); next.images[key]=raw.images[key];
   }

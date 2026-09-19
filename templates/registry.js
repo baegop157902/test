@@ -2,7 +2,8 @@ const templates = {
   '2p-simple': () => import('./2p-simple.js'),
   '2p-pair1': () => import('./2p-pair1.js'),
   'pattern-header': () => import('./pattern-header.js'),
-  '30p-pair': () => import('./30p-pair.js')
+  '30p-pair': () => import('./30p-pair.js'),
+  'main-tweet': () => import('./main-tweet.js')
 };
 
 export async function loadTemplate(id) {
