@@ -121,6 +121,7 @@ import { loadTemplate } from '../templates/registry.js';
   }
 
   const canvasObserver = new ResizeObserver(fitCanvas);
+  window.addEventListener('editor:layout',fitCanvas);
   canvasObserver.observe(canvasArea);
 
   const sidebarToggle = document.querySelector(".sidebar-toggle");

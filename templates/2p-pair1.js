@@ -155,6 +155,7 @@ export function fields(side, group) {
     }
 }
 
+//저장
 export function initialState(id = templateId) {
     const values = {};
     for (const group of ['sub1', 'sub2', 'sub3']) {
@@ -162,8 +163,16 @@ export function initialState(id = templateId) {
         values[`common-${group}-background-color`] = '#ffffff';
         values[`common-${group}-reference-name`] = '제목';
         values[`common-${group}-reference-text`] = '상세내용';
+        values[`common-${group}-image-citation`] = '';
     }
     Object.assign(values, {
+        'common-bg-image-citation': '',
+        'common-main-image-citation': '',
+        'left-profile-image-citation': '',
+        'right-profile-image-citation': '',
+        'left-moe-image-citation': '',
+        'right-moe-image-citation': '',
+
         'common-bg-mode': 'light',
         'common-blur': true,
         'common-pair-name': '페어명',
@@ -262,8 +271,19 @@ export function createPairScene(stage, openEditor) {
         }
     }
 
+    let prevBgState = null;
+
+    // 기존 updateBackground 함수를 아래와 같이 수정
     function updateBackground(id, item) {
-        if (id === 'common-bg-image') { refreshBackground(); return; }
+        if (id === 'common-bg-image') { 
+            // 현재 배경 모드와 블러 상태를 하나의 문자열로 결합하여 비교
+            const currentBgState = currentValues['common-bg-mode'] + '-' + currentValues['common-blur'];
+            if (prevBgState !== currentBgState) {
+                refreshBackground(); 
+                prevBgState = currentBgState; // 상태 갱신
+            }
+            return; 
+        }
         let side, group;
         if (id.startsWith('common')) {
             side = 'common';
@@ -340,7 +360,23 @@ export function createPairScene(stage, openEditor) {
             fontSize: 28,
             listening: false
         });
-        group.add(rect, clip, plus);
+
+        const isBg = id === 'common-bg-image';
+        const citationText = new K.Text({
+            width: isBg ? p.width - 10 : p.width,
+            y: p.height - 20, // 글자크기(14) + 하단여백(6) = 밑에서 20px 띄움
+            align: isBg ? 'right' : 'center',
+            fontSize: 14,
+            fontFamily: 'Pretendard', // (선택) 폰트가 빠져있어 복구했습니다.
+            fill: '#5f5f5f', // 회색 글자
+            stroke: '#ffffff',
+            strokeWidth: 2,
+            fillAfterStrokeEnabled: true,
+            listening: false,
+            visible: false
+        });
+
+        group.add(rect, clip, plus, citationText);
         parent.add(group);
 
         let side, key;
@@ -356,7 +392,8 @@ export function createPairScene(stage, openEditor) {
             image,
             plus,
             rect,
-            p
+            p,
+            citationText
         });
     }
 
@@ -714,7 +751,20 @@ export function createPairScene(stage, openEditor) {
         ready,
         updateValues(values) {
             currentValues = values;
-            for (const [id, item] of imageNodes) updateBackground(id, item);
+            for (const [id, item] of imageNodes) {
+                updateBackground(id, item);
+                
+                if (item.citationText) {
+                    const textVal = values[`${id}-citation`];
+                    const hasImg = !!item.image.image();
+                    if (hasImg && textVal && textVal.trim() !== '') {
+                        item.citationText.text('ⓒ' + textVal);
+                        item.citationText.visible(true);
+                    } else {
+                        item.citationText.visible(false);
+                    }
+                }
+            }
             for (const [node, b] of textBindings) {
                 let textValue = values[b.text] || '';
                 if (textValue && b.suffix) {
@@ -739,6 +789,11 @@ export function createPairScene(stage, openEditor) {
             setImage(item, img);
             item.plus.visible(!img);
             updateBackground(id, item);
+            
+            if (item.citationText) {
+                const textVal = currentValues[`${id}-citation`];
+                item.citationText.visible(!!img && !!textVal && textVal.trim() !== '');
+            }
             layer.batchDraw();
         }
     };

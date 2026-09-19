@@ -55,7 +55,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .floating-close { position: absolute; top: 8px; right: 8px; border: 0; border-radius: 50%; width: 30px; height: 30px; background: #f0f0f0; font-size: 23px; }
 .field-content h3 { margin: 0 24px 18px; font-size: 18px; text-align: center; }
 .field-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 13px; }
-.field-row > span { flex: 0 0 72px; }
+.field-row > span { flex: 0 0 auto; }
 .field-row input, .field-row textarea, .field-row select { min-width: 0; width: 100%; padding: 8px; border: 1px solid #c9c9c9; border-radius: 5px; font-size: 14px; background: #fafafa; color: #333; }
 .field-row textarea { resize: vertical; }
 .color-swatch { width: 28px; height: 28px; border: 1px solid #aaa; border-radius: 4px; }
@@ -96,8 +96,8 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .sticker-layer-btn .bi::before { display: block; line-height: 1; vertical-align: 0; }
 .sticker-drag-handle {
     position: absolute;
-    top: 6px;
-    left: 6px;
+    top: 2px;
+    left: 2px;
     width: 32px;
     height: 32px;
     display: flex;
@@ -120,6 +120,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
     transform: scale(1.05) rotate(2deg); 
     transition: transform 0.1s ease-out !important;
 }
+
 /* 카드가 들어갈 빈자리 표시 영역 */
 .drag-placeholder {
     background: rgba(0,0,0,0.03) !important;
@@ -129,6 +130,27 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .image-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .image-upload:focus-within { outline: 3px solid #476ce4; outline-offset: 3px; }
 .image-remove { display: block; margin: 12px auto 0; padding: 5px 8px; border: 0; background: transparent; font-size: 12px; color: #666; text-decoration: underline; }
+.image-citation-input, .sticker-citation-input {
+    display: block; width: 100%; max-width: 200px; margin: 12px auto 8px; padding: 8px 14px;
+    border: 1px solid #ccc; border-radius: 30px; /* 완전히 둥근 형태 */
+    font-size: 12px; background: #fafafa; text-align: center; color: #333;
+}
+.image-citation-input:focus, .sticker-citation-input:focus {
+    outline: 2px solid #1769e0; border-color: transparent;
+}
+/* PC 스티커 출처 'c' 버튼 */
+.sticker-citation-btn {
+    position: fixed; z-index: 145; width: 28px; height: 28px; padding: 0;
+    border: 2px solid white; border-radius: 50%; background: #333; color: white;
+    font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    display: grid; place-items: center; font-weight: bold; cursor: pointer;
+    font-family: "Pretendard", sans-serif; font-weight: 400; 
+}
+.sticker-citation-btn:hover { background: #000; }
+.pc-citation-input {
+    position: fixed; z-index: 145; margin: 0; width: 120px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
 .field-menu > button { margin: 4px; padding: 7px; border: 1px solid #ccc; border-radius: 8px; background: #f6f6f6; }
 .sticker-canvas-delete { position: fixed; z-index: 145; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: #ff2424; color: white; font-size: 22px; line-height: 1; }
 .editor-drag-handle { cursor: grab; touch-action: none; user-select: none; }
@@ -173,7 +195,7 @@ dialog button, .import-file { padding: 9px 12px; border: 1px solid #ccc; border-
   .image-upload { max-height: none; }
   .mobile-field-panel > h3 { font-size: 17px; margin: 8px 0 4px; text-align: center; }
   .mobile-field-panel > p { font-size: 12px; margin: 0 0 16px; text-align: center; }
-  .sticker-list { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 48px; }
+  .sticker-list { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 48px; scrollbar-width: none !important; }
   .add-sticker, .sticker-card { flex: 0 0 120px; height: 150px; border: 1px solid transparent; border-radius: 8px; }
   .add-sticker { background: #ddd; font-size: 13px; }
   .sticker-card { position: relative; background: #e0e0e0; }
@@ -306,4 +328,58 @@ dialog button, .import-file { padding: 9px 12px; border: 1px solid #ccc; border-
   .character-tabs button[aria-selected="true"] { background: #f7f8fa; }
   .field-categories button[aria-pressed="true"] { background: #dfe4eb; }
   .add-sticker, .sticker-card { background: #e2e6ec; }
+}
+/* 30p-pair: 다인 카드 편집 UI (템플릿 옵션을 켠 경우에만 사용) */
+.canvas-area.multi-character-canvas { position: relative; }
+.canvas-add-member { position: absolute; bottom: 8px; left: calc(50% - 24px); width: 48px; height: 48px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 30px; background: #434343; color: #fff; font-size: 30px; cursor: pointer; }
+.canvas-add-member:disabled, .character-tab-action:disabled { opacity: .4; cursor: default; }
+.desktop-member-navigation select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; }
+.multi-character-editor.floating-editor { width: 360px; }
+:is(.multi-character-editor,.is-pattern-editor) .desktop-field-categories { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+:is(.multi-character-editor,.is-pattern-editor) .desktop-field-categories button { padding: 6px 16px; border: 1px solid #b6bfca; border-radius: 20px; background: linear-gradient(135deg, rgba(255,255,255,.6), rgba(216,223,232,.5)); color: #252b33; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 2px 5px rgba(35,43,58,.045); font-size: 13px; cursor: pointer; transition: background .2s; white-space: nowrap; }
+:is(.multi-character-editor,.is-pattern-editor) .desktop-field-categories button[aria-pressed="true"] { background: #dfe4eb; }
+.field-inline-row { display: flex; gap: 12px; margin-bottom: 14px; }
+.field-inline-row .field-row { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; margin: 0; align-items: center; }
+.field-inline-row .field-row > span { width: auto; white-space: nowrap; }
+.member-preview { position: absolute; left: 8px; bottom: 8px; width: 246px; height: 275px; background: #fbfbfb; outline: 1px solid #d1d4d8; box-shadow: 0 2px 10px #0001; pointer-events: none; }
+
+.member-form-action { display: block; width: 100%; margin-top: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; color: #a43c3c; background: #fff; cursor: pointer; }
+.member-form-action:disabled { color: #aaa; cursor: default; }
+.member-form-actions { display: flex; gap: 8px; margin-top: 20px; }
+.member-form-actions .member-form-action { margin: 0; flex: 1; width: auto; }
+.member-form-actions .member-move-action { flex: 0 0 42px; padding: 4px; color: #333; font-size: 26px; }
+@media (min-width: 1025px) {
+  .multi-character-canvas .member-preview { position: fixed; pointer-events: auto; cursor: grab; touch-action: none; user-select: none; z-index: 190; padding: 16px 16px 24px; border-radius: 12px; outline: none; background: #fff; box-shadow: 0 2px 12px #0003; }
+  .multi-character-canvas .member-preview.is-dragging { cursor: grabbing; }
+}
+.member-preview-header { display: flex; align-items: center; justify-content: space-between; height: 40px; }
+.member-preview-header strong { font-size: 14px; }
+.member-preview .floating-close { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #f0f0f0; color: #333; font-size: 23px; cursor: pointer; position: static; }
+.member-preview-resize { position: absolute; right: 2px; bottom: 2px; width: 22px; height: 22px; padding: 0; border: 0; background: transparent; color: #777; cursor: nwse-resize; touch-action: none; }
+@media (max-width: 1024px) { .member-preview-header,.member-preview-resize { display: none; } }
+.image-field h4 { margin: 12px 0 8px; font-size: 14px; }
+@media (min-width: 1025px) {
+  .canvas-area.multi-character-canvas { padding-bottom: 64px; }
+}
+@media (max-width: 1024px) {
+  .canvas-add-member { display: none; }
+  .character-tab-row { display: flex; width: 100%; min-width: 0; flex: none; }
+  .character-tab-row .character-tabs-scroll { display: flex; flex: 1 1 0; min-width: 0; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; cursor: grab; }
+  .character-tabs-scroll::-webkit-scrollbar { display: none; }
+  .character-tab-row .character-tabs-scroll button { flex: 0 0 auto; min-width: 60px; max-width: 180px; padding-left: 14px; padding-right: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .character-tab-action { flex: 0 0 43px; width: 43px; border: 0; background: #434343; color: #fff; font-size: 24px; cursor: pointer; }
+  .character-tab-fixed { flex: 0 0 60px; width: 60px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #777; font-size: 13px; }
+  .character-tab-fixed[aria-selected="true"] { color: #111; border-bottom-color: #333; font-weight: 700; }
+
+}
+
+/* pattern-header controls are mounted synchronously with the form. */
+.floating-editor.is-pattern-editor { width: 380px; }
+.field-number { display: flex; align-items: center; gap: 10px; }
+.field-number .custom-range-slider { flex: 1; min-width: 40px; width: auto; padding: 0; cursor: pointer; }
+.field-number input[type=number] { flex: 0 0 60px; width: 60px; }
+.member-show-all { position: absolute; left: 8px; bottom: 8px; padding: 7px 14px; border: 1px solid #b6bfca; border-radius: 20px; background: #fff; color: #333; z-index: 12; font-size: 13px; }
+@media (max-width: 1024px) {
+  .member-detail-view #konva-container { visibility: hidden; pointer-events: none; }
+  .multi-character-canvas .member-preview { left: 50%; top: calc(50% - 20px); bottom: auto; transform: translate(-50%,-50%); box-shadow: none; }
 }

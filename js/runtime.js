@@ -27,13 +27,26 @@ async function start(config){
   const stickers=createStickers(stage,store,id=>forms?.selectSticker(id));
   const eyedropper=createCanvasEyedropper(stage,stickers,waitForDraw);
   forms=createForms(store,stickers,eyedropper);
+  const resize=(event)=>{
+    const width=event?.detail?.width ?? (parseFloat(container.style.width)||0);
+    const scale=width/config.width;
+    stage.size({width,height:config.height*scale});
+    stage.scale({x:scale,y:scale});stage.draw();stickers.positionDelete();
+  };
+  container.addEventListener('editor:resize',resize);
   let pending=Promise.resolve(),renderEpoch=0;
   const activeImages=new Map();
   async function render(state,kind){
+    const bounds=definition.getSize?.(state)??definition.size;
+    if(config.width!==bounds.width||config.height!==bounds.height){
+      config.width=bounds.width;config.height=bounds.height;
+      container.style.setProperty('--canvas-ratio',bounds.width+' / '+bounds.height);
+      window.dispatchEvent(new Event('editor:layout'));
+    }
     scene.updateState?.(state,kind);
     scene.updateValues(state.values);
     const fontsReady=fontSync.sync();
-    if(kind==='values'){await fontsReady;return;}
+    if(kind==='values'||kind==='labels'){await fontsReady;return;}
     const token=++renderEpoch;
     const jobs=Object.keys(positions).map(async id=>{
       const src=state.images[id]||null;if(activeImages.get(id)===src)return;
@@ -44,22 +57,28 @@ async function start(config){
     if(kind==='stickers'||kind==='replace'||kind==='structure')jobs.push(stickers.render());
     await Promise.all([...jobs,fontsReady]);pruneImages(store.state);
   }
-  store.subscribe((state,kind)=>{
-    const task=render(state,kind);pending=Promise.all([pending.catch(()=>{}),task]).then(()=>{});
+  let renderFrame=null,queuedKind=null;
+  function flushRender(){
+    if(renderFrame!==null)cancelAnimationFrame(renderFrame);
+    renderFrame=null;if(!queuedKind)return;
+    const kind=queuedKind;queuedKind=null;
+    // 이미지 변경 직후 텍스트를 입력해도 이미지 갱신이 누락되지 않도록 합칩니다.
+    pending=pending.catch(()=>{}).then(()=>render(store.state,kind));
     pending.catch(error=>notify(error.message));
+  }
+  store.subscribe((state,kind)=>{
+    queuedKind=queuedKind===null?kind:queuedKind===kind?kind:'replace';
+    if(renderFrame===null)renderFrame=requestAnimationFrame(flushRender);
   });
   await render(store.state,'replace');
-  async function waitForDraw(){await pending;await fontSync.sync();}
+  async function waitForDraw(){
+    do{flushRender();const task=pending;await task;if(task===pending&&!queuedKind)break;}while(true);
+    await fontSync.sync();stage.draw();
+  }
   const saving=attachSaving(store,stage,stickers,waitForDraw);
   await saving.ready;
   document.querySelector('[data-action="sticker"]').onclick=()=>forms.chooseSticker();
-  const resize=(event)=>{
-    const width=event?.detail?.width ?? (parseFloat(container.style.width)||0);
-    const scale=width/config.width;
-    stage.size({width,height:config.height*scale});
-    stage.scale({x:scale,y:scale});stage.draw();stickers.positionDelete();
-  };
-  container.addEventListener('editor:resize',resize);resize();
+  resize();
   document.fonts.ready.then(()=>fontSync.refresh());
   window.pairEditor={definition,stage,store,scene,stickers,forms,saving,eyedropper,waitForDraw};
 }

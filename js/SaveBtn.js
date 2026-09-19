@@ -53,7 +53,7 @@ export function attachSaving(store,stage,stickers,waitForDraw) {
     const previous={width:stage.width(),height:stage.height(),scale:stage.scale()};
     const transformerVisible=stickers.transformer.visible();
     try{
-      const originalSize={...size};
+      const originalSize={...(store.definition.getSize?.(store.state)??size)};
       stickers.transformer.hide();stage.scale({x:1,y:1});stage.size(originalSize);stage.draw();
       return stage.toCanvas({pixelRatio});
     }finally{

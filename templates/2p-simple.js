@@ -147,6 +147,13 @@ export function initialState(id = templateId) {
             values[`${side}-${group}-background-color`] = '#ffffff';
         }
         Object.assign(values, {
+            [`${side}-LD-image-citation`]: '',
+            [`${side}-profile-image-citation`]: '',
+            [`${side}-SD-image-citation`]: '',
+            [`${side}-add-1-citation`]: '',
+            [`${side}-add-2-citation`]: '',
+            [`${side}-add-3-citation`]: '',
+
             [`${side}-korea-name`]: '이름',
             [`${side}-etc-name`]: 'Name',
             [`${side}-sub-font`]: 'Pretendard',
@@ -264,7 +271,22 @@ export function createPairScene(stage, openEditor) {
             fontSize: 28,
             listening: false
         });
-        group.add(rect, clip, plus);
+
+        const citationText = new K.Text({
+            width: p.width,
+            y: p.height - 20, // 글자크기(14) + 하단여백(6) = 밑에서 20px 띄움
+            align: 'center',
+            fontSize: 14,
+            fontFamily: 'Pretendard', // (선택) 폰트가 빠져있어 복구했습니다.
+            fill: '#5f5f5f', // 회색 글자
+            stroke: '#ffffff',
+            strokeWidth: 2,
+            fillAfterStrokeEnabled: true,
+            listening: false,
+            visible: false
+        });
+
+        group.add(rect, clip, plus, citationText);
         parent.add(group);
         const side = id.startsWith('left') ? 'left' : 'right';
         const key = id.slice(side.length + 1).replace(/-image$/, '');
@@ -273,7 +295,8 @@ export function createPairScene(stage, openEditor) {
             image,
             plus,
             rect,
-            p
+            p,
+            citationText
         });
     }
     addImage('left-LD-image', ld);
@@ -372,11 +395,12 @@ export function createPairScene(stage, openEditor) {
         }, side, 'name');
         text({
             x,
-            y: 124,
+            y: 122,
             width: 424,
             fontSize: 48,
             fontStyle: '800',
             wrap: 'none',
+            verticalAlign: 'middle',
             align
         }, {
             text: `${side}-etc-name`,
@@ -494,7 +518,20 @@ export function createPairScene(stage, openEditor) {
         layer,
         updateValues(values) {
             currentValues = values;
-            for (const [id, item] of imageNodes) updateBackground(id, item);
+            for (const [id, item] of imageNodes) {
+                updateBackground(id, item);
+                
+                if (item.citationText) {
+                    const textVal = values[`${id}-citation`];
+                    const hasImg = !!item.image.image();
+                    if (hasImg && textVal && textVal.trim() !== '') {
+                        item.citationText.text('ⓒ ' + textVal);
+                        item.citationText.visible(true);
+                    } else {
+                        item.citationText.visible(false);
+                    }
+                }
+            }
             for (const [node, b] of textBindings) {
                 node.text(values[b.text] + (b.suffix || ''));
                 if (b.color) node.fill(values[b.color]);
@@ -509,6 +546,7 @@ export function createPairScene(stage, openEditor) {
             item.image.image(img || null);
             item.plus.visible(!img);
             updateBackground(id, item);
+
             if (img) {
                 const r = Math.max(item.p.width / img.naturalWidth, item.p.height / img.naturalHeight);
                 const w = item.p.width / r,
@@ -519,6 +557,11 @@ export function createPairScene(stage, openEditor) {
                     width: w,
                     height: h
                 });
+            }
+            
+            if (item.citationText) {
+                const textVal = currentValues[`${id}-citation`];
+                item.citationText.visible(!!img && !!textVal && textVal.trim() !== '');
             }
             layer.batchDraw();
         }

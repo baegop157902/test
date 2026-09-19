@@ -3,6 +3,7 @@ export function createFontSync(stage, updateValues, onError) {
   function refresh() {
     updateValues();
     for(const node of stage.find('Text')) {
+      if(!node.isVisible())continue;
       const text=node.text();
       if(text){node.text('');node.text(text);}
     }
@@ -13,6 +14,7 @@ export function createFontSync(stage, updateValues, onError) {
     if(document.fonts){
       const requests=new Map();
       for(const node of stage.find('Text')){
+        if(!node.isVisible())continue;
         const text=node.text();if(!text)continue;
         const family=node.fontFamily().split(',').map(name=>{
           const clean=name.trim().replace(/^['"]|['"]$/g,'');

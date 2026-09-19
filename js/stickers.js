@@ -1,9 +1,9 @@
     import { decodeImage, notify, MAX_STICKERS } from './state.js';
 
     export function createStickers(stage, store, onSelect) {
-    const { size } = store.definition;
+    const getSize = () => store.definition.getSize?.(store.state) ?? store.definition.size;
     const Math_max = Math.max, Math_min = Math.min;
-    const maxSize = Math_max(size.width, size.height) * 2;
+    const maxSize = () => { const size = getSize(); return Math_max(size.width, size.height) * 2; };
     const BUTTON_GAP = 2;
     const K = window.Konva, compact = matchMedia('(max-width: 1024px)');
     const layer = new K.Layer(); stage.add(layer);
@@ -13,7 +13,7 @@
         enabledAnchors: ['top-left', 'top-right', 'bottom-left', 'bottom-right'], anchorSize: compact.matches ? 16 : 10,
         rotateAnchorOffset: compact.matches ? 26 : 22, padding: 2, borderStroke: '#08b8ef', anchorStroke: '#08b8ef',
         anchorStyleFunc(anchor) { if (anchor.hasName('rotater')) anchor.setAttrs({ width: 24, height: 24, offsetX: 12, offsetY: 12, cornerRadius: 4, fill: '#fff' }); },
-        boundBoxFunc(oldBox, newBox) { return Math.abs(newBox.width) < 12 || Math.abs(newBox.height) < 12 || Math.abs(newBox.width) > maxSize * stage.scaleX() || Math.abs(newBox.height) > maxSize * stage.scaleX() ? oldBox : newBox; }
+        boundBoxFunc(oldBox, newBox) { return Math.abs(newBox.width) < 12 || Math.abs(newBox.height) < 12 || Math.abs(newBox.width) > maxSize() * stage.scaleX() || Math.abs(newBox.height) > maxSize() * stage.scaleX() ? oldBox : newBox; }
     });
     layer.add(transformer); 
     
@@ -25,7 +25,12 @@
         style.id = 'sticker-custom-styles';
         style.textContent = `
             @media (max-width: 1024px) {
-                .sticker-list { padding-bottom: 140px !important; }
+                .sticker-list { padding-bottom: 150px !important; }
+                /* 🔥 스티커 카드 안에 있을 때만 너비를 104px로 제한합니다 */
+                .sticker-card .mobile-citation-input {
+                    width: 120px !important;
+                    box-sizing: border-box !important;
+                }
             }
             .sticker-outline-canvas { position: fixed; z-index: 140; }
         `;
@@ -193,12 +198,13 @@
 
             // 순서가 변경되었다면 스토어(상태)를 갱신합니다.
             if (oldIndex !== newIndex && newIndex !== -1 && oldIndex !== -1) {
-                // 1. 상태가 갱신되어 화면이 초기화되기 직전에 현재 스크롤 위치를 기억합니다.
                 const currentScroll = stickerList.scrollLeft;
 
                 store.change(s => {
                     const item = s.stickers.splice(oldIndex, 1)[0];
                     s.stickers.splice(newIndex, 0, item);
+                    // 🔥 [핵심] 저장 트리거를 위한 강제 새 배열 할당
+                    s.stickers = [...s.stickers]; 
                 }, 'stickers');
                 
                 render().then(() => {
@@ -217,79 +223,130 @@
     };
 
     let isInjecting = false;
-    let savedScrollLeft = 0; // 🔥 [추가됨] 사용자의 실시간 스크롤 위치를 저장할 변수
+    let savedScrollLeft = 0; 
     
     const injectMobileButtons = () => {
+        // 🔥 [해결 2] 드래그(플립) 중일 때는 DOM 순서가 꼬이므로 버튼 갱신을 완전히 멈춥니다.
+        if (document.querySelector('.sticker-card.is-dragging')) return;
         if (isInjecting) return;
-        isInjecting = true;
+        isInjecting = true; 
         
-        // 🔥 [추가됨] 스크롤 위치 저장 및 자동 복구 로직
-        const stickerList = document.querySelector('.sticker-list');
-        if (stickerList) {
-            // 1. 클릭 등으로 리스트가 새로 그려져 스크롤이 0이 되면, 기억해둔 위치로 복구합니다.
-            if (stickerList.scrollLeft === 0 && savedScrollLeft > 0) {
-                stickerList.scrollLeft = savedScrollLeft;
+        try { 
+            const stickerList = document.querySelector('.sticker-list');
+            if (stickerList) {
+                if (stickerList.scrollLeft === 0 && savedScrollLeft > 0) {
+                    stickerList.scrollLeft = savedScrollLeft;
+                }
+                if (!stickerList._hasScrollTracker) {
+                    stickerList._hasScrollTracker = true;
+                    stickerList.addEventListener('scroll', () => {
+                        savedScrollLeft = stickerList.scrollLeft;
+                    }, { passive: true });
+                }
             }
             
-            // 2. 사용자가 스크롤을 할 때마다 그 위치를 실시간으로 업데이트합니다.
-            if (!stickerList._hasScrollTracker) {
-                stickerList._hasScrollTracker = true;
-                stickerList.addEventListener('scroll', () => {
-                    savedScrollLeft = stickerList.scrollLeft;
-                }, { passive: true });
-            }
-        }
-        
-        const cards = document.querySelectorAll('.sticker-list .sticker-card:not(.add-sticker)');
-        
-        if (cards.length > 0) {
-            store.state.stickers.forEach((item, i) => {
-                const card = cards[i];
-                if (!card) return;
-                
-                card.dataset.id = item.id; // 드래그 앤 드롭에서 고유 식별을 위해 ID 주입
-
-                const hasOutline = !!item.outline;
-
-                // 1. 외곽선 버튼 유지
-                let outlineBtn = card.querySelector('.mobile-outline-btn');
-                if (!outlineBtn) {
-                    outlineBtn = document.createElement('button');
-                    outlineBtn.type = 'button';
-                    outlineBtn.className = 'sticker-shadow-toggle mobile-outline-btn';
-                    outlineBtn.style.position = 'absolute';
-                    outlineBtn.style.top = 'calc(100% + 40px)';
-                    outlineBtn.style.left = '50%';
-                    outlineBtn.style.transform = 'translateX(-50%)';
-                    outlineBtn.style.width = 'max-content';
-                    card.appendChild(outlineBtn);
-                }
-                
-                outlineBtn.onclick = (e) => { e.stopPropagation(); toggleOutline(item.id); };
-                const newText = hasOutline ? '외곽선 삭제' : '외곽선 추가';
-                if (outlineBtn.textContent !== newText) outlineBtn.textContent = newText;
-                const newPressed = String(hasOutline);
-                if (outlineBtn.getAttribute('aria-pressed') !== newPressed) outlineBtn.setAttribute('aria-pressed', newPressed);
-
-                // 🔥 만약 이전 단계에서 만든 상/하 버튼 흔적이 남아있다면 제거
-                const oldControls = card.querySelector('.mobile-layer-controls');
-                if (oldControls) oldControls.remove();
-
-                // 2. 새로운 드래그 핸들 (<i class="bi bi-list"></i>) 생성 (좌측 상단)
-                let dragHandle = card.querySelector('.sticker-drag-handle');
-                if (!dragHandle) {
-                    dragHandle = document.createElement('div');
-                    dragHandle.className = 'sticker-drag-handle';
-                    dragHandle.innerHTML = '<i class="bi bi-list"></i>';
-                    dragHandle.setAttribute('aria-label', '드래그하여 순서 변경');
-                    card.appendChild(dragHandle);
-                }
-            });
+            // 🔥 [해결 2] 플립할 때 생기는 가짜 박스(drag-placeholder)는 철저하게 무시하도록 필터링
+            const cards = document.querySelectorAll('.sticker-list .sticker-card:not(.add-sticker):not(.drag-placeholder)');
             
-            // 리스트 렌더링이 끝나면 드래그 이벤트 엔진을 가동합니다. (최초 1회만 등록됨)
-            initDragDrop();
+            if (cards.length > 0) {
+                store.state.stickers.forEach((item, i) => {
+                    const card = cards[i];
+                    if (!card) return;
+                    
+                    card.dataset.id = item.id; 
+
+                    const hasOutline = !!item.outline;
+
+                    const oldControls = card.querySelector('.mobile-layer-controls');
+                    if (oldControls) oldControls.remove();
+
+                    let mobileControls = card.querySelector('.mobile-controls-container');
+                    if (!mobileControls) {
+                        mobileControls = document.createElement('div');
+                        mobileControls.className = 'mobile-controls-container';
+                        mobileControls.style.position = 'absolute';
+                        mobileControls.style.top = 'calc(100% + 8px)'; 
+                        mobileControls.style.left = '50%';
+                        mobileControls.style.transform = 'translateX(-50%)';
+                        mobileControls.style.display = 'flex';
+                        mobileControls.style.flexDirection = 'column';
+                        mobileControls.style.gap = '6px'; 
+                        // 🔥 [해결 1] 컨테이너 폭이 카드(120px)를 넘지 못하게 100%로 꽉 묶음
+                        mobileControls.style.width = '100%'; 
+                        mobileControls.style.alignItems = 'center';
+                        card.appendChild(mobileControls);
+                    }
+
+                    let citationForm = card.querySelector('.mobile-citation-input');
+                    // 🔥 [해결 3] 키보드바가 열려있을 때 남기는 흔적(placeholder)이 있으면 새 폼 중복 생성 방지
+                    const isTyping = card.querySelector('.keyboard-input-placeholder');
+                    
+                    if (!citationForm && !isTyping) {
+                        citationForm = document.createElement('input');
+                        citationForm.type = 'text';
+                        citationForm.className = 'sticker-citation-input mobile-citation-input';
+                        citationForm.placeholder = '출처가 있나요?';
+                        citationForm.style.margin = '0';
+                        citationForm.style.position = 'static';
+                        citationForm.style.transform = 'none';
+                        // 🔥 키보드바로 끌려갔을 때도 작아지는 문제를 일으키는 인라인 스타일 2줄 삭제
+                        citationForm.style.backgroundImage = `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Ctext x='0' y='13' font-size='13' font-family='sans-serif' fill='%23555'%3Eⓒ%3C/text%3E%3C/svg%3E")`;
+                        citationForm.style.backgroundRepeat = 'no-repeat';
+                        citationForm.style.backgroundPosition = '12px center'; // 좌측에서 12px 위치에 고정
+                        citationForm.style.paddingLeft = '30px'; // 글자가 ⓒ를 침범하지 않게 밀어냄
+                        citationForm.style.textAlign = 'left'; // 자연스러운 배치를 위해 좌측 정렬
+                        
+                        mobileControls.appendChild(citationForm);
+                    }
+                    
+                    // 폼 값이 변경될 때 최신화 로직
+                    if (citationForm && citationForm.tagName === 'INPUT') {
+                        citationForm.value = item.citation || '';
+                        citationForm.onclick = (e) => e.stopPropagation();
+                        citationForm.oninput = (e) => {
+                            store.change(s => {
+                                const t = s.stickers.find(i => i.id === item.id);
+                                if (t) t.citation = e.target.value;
+                            }, 'silent');
+                            render();
+                        };
+                    }
+
+                    const shadowBtn = card.querySelector('.sticker-shadow-toggle:not(.mobile-outline-btn)');
+                    if (shadowBtn && shadowBtn.parentNode !== mobileControls) {
+                        shadowBtn.style.position = 'static';
+                        shadowBtn.style.transform = 'none';
+                        mobileControls.appendChild(shadowBtn);
+                    }
+
+                    let outlineBtn = card.querySelector('.mobile-outline-btn');
+                    if (!outlineBtn) {
+                        outlineBtn = document.createElement('button');
+                        outlineBtn.type = 'button';
+                        outlineBtn.className = 'sticker-shadow-toggle mobile-outline-btn';
+                        mobileControls.appendChild(outlineBtn);
+                    }
+                    outlineBtn.onclick = (e) => { e.stopPropagation(); toggleOutline(item.id); };
+                    const newText = hasOutline ? '외곽선 삭제' : '외곽선 추가';
+                    if (outlineBtn.textContent !== newText) outlineBtn.textContent = newText;
+                    const newPressed = String(hasOutline);
+                    if (outlineBtn.getAttribute('aria-pressed') !== newPressed) outlineBtn.setAttribute('aria-pressed', newPressed);
+
+                    let dragHandle = card.querySelector('.sticker-drag-handle');
+                    if (!dragHandle) {
+                        dragHandle = document.createElement('div');
+                        dragHandle.className = 'sticker-drag-handle';
+                        dragHandle.innerHTML = '<i class="bi bi-list"></i>';
+                        dragHandle.setAttribute('aria-label', '드래그하여 순서 변경');
+                        card.appendChild(dragHandle);
+                    }
+                });
+                
+                initDragDrop();
+            }
+        } finally {
+            isInjecting = false;
         }
-        isInjecting = false;
     };
 
     store.subscribe((state, kind) => {
@@ -302,6 +359,38 @@
         injectMobileButtons();
     }).observe(document.body, { childList: true, subtree: true });
     
+    const citationBtn = document.createElement('button');
+    citationBtn.className = 'sticker-citation-btn'; citationBtn.type = 'button';
+    citationBtn.textContent = '출처'; citationBtn.hidden = true; citationBtn.setAttribute('aria-label', '출처 입력');
+    document.body.append(citationBtn);
+
+    const citationPcInput = document.createElement('input');
+    citationPcInput.type = 'text'; citationPcInput.className = 'sticker-citation-input pc-citation-input';
+    citationPcInput.placeholder = '출처가 있나요?'; citationPcInput.hidden = true;
+    citationPcInput.style.backgroundImage = `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Ctext x='0' y='13' font-size='13' font-family='sans-serif' fill='%23555'%3Eⓒ%3C/text%3E%3C/svg%3E")`;
+    citationPcInput.style.backgroundRepeat = 'no-repeat';
+    citationPcInput.style.backgroundPosition = '12px center';
+    citationPcInput.style.paddingLeft = '30px';
+    citationPcInput.style.textAlign = 'left';
+    
+    document.body.append(citationPcInput);
+
+    citationBtn.onclick = () => {
+        citationPcInput.hidden = !citationPcInput.hidden;
+        if (!citationPcInput.hidden) {
+            const item = store.state.stickers.find(i => i.id === selected);
+            citationPcInput.value = item?.citation || '';
+            citationPcInput.focus();
+        }
+    };
+    citationPcInput.oninput = (e) => {
+        store.change(s => {
+            const item = s.stickers.find(i => i.id === selected);
+            if (item) item.citation = e.target.value;
+        }, 'silent');
+        render();
+    };
+
     const deleteButton = document.createElement('button'); deleteButton.className = 'sticker-canvas-delete'; deleteButton.type = 'button';
     deleteButton.textContent = '×'; deleteButton.setAttribute('aria-label', '선택한 스티커 삭제'); deleteButton.hidden = true; document.body.append(deleteButton);
 
@@ -314,30 +403,39 @@
     layerDownBtn.innerHTML = '<i class="bi bi-arrow-down-circle-fill"></i>'; layerDownBtn.hidden = true; document.body.append(layerDownBtn);
 
     // 레이어 순서 변경 함수
-    async function moveLayer(direction) {
-        if (!selected) return;
+    async function moveLayer(targetId, direction) {
+        if (!targetId) return;
         let changed = false;
         store.change(s => {
-            const idx = s.stickers.findIndex(i => i.id === selected);
-            // UP(위로): 캔버스 맨 앞(배열 인덱스 0)으로 가야 하므로 위치를 뺍니다(감소).
+            const idx = s.stickers.findIndex(i => i.id === targetId);
+            
+            // 상태 감지 프레임워크가 변경을 확실히 인식하도록 splice를 사용합니다.
             if (direction === 'up' && idx > 0) {
-                [s.stickers[idx], s.stickers[idx - 1]] = [s.stickers[idx - 1], s.stickers[idx]];
+                const item = s.stickers.splice(idx, 1)[0];
+                s.stickers.splice(idx - 1, 0, item);
                 changed = true;
             } 
-            // DOWN(아래로): 캔버스 맨 뒤(배열 끝)로 가야 하므로 위치를 더합니다(증가).
             else if (direction === 'down' && idx < s.stickers.length - 1) {
-                [s.stickers[idx], s.stickers[idx + 1]] = [s.stickers[idx + 1], s.stickers[idx]];
+                const item = s.stickers.splice(idx, 1)[0];
+                s.stickers.splice(idx + 1, 0, item);
                 changed = true;
+            }
+            
+            // 🔥 [핵심] 변경이 일어났다면 완전히 새로운 배열 껍데기를 씌워 강제 세이브를 유도합니다.
+            if (changed) {
+                s.stickers = [...s.stickers]; 
             }
         }, 'stickers');
         
         if (changed) {
-            await render(); // 배열 순서가 바뀌었으므로 캔버스 재렌더링
-            select(selected); // 선택 유지 및 위치/UI 업데이트
+            await render(); 
+            select(targetId); 
         }
     }
-    layerUpBtn.onclick = () => moveLayer('up');
-    layerDownBtn.onclick = () => moveLayer('down');
+    
+    // PC 캔버스 버튼 이벤트 (selected ID 전달)
+    layerUpBtn.onclick = () => moveLayer(selected, 'up');
+    layerDownBtn.onclick = () => moveLayer(selected, 'down');
     
     function positionDelete() {
         positionRotationIcon();
@@ -370,6 +468,13 @@
         const node = nodes.get(selected); deleteButton.hidden = compact.matches || !node;
         layerUpBtn.hidden = deleteButton.hidden;
         layerDownBtn.hidden = deleteButton.hidden;
+        
+        // 🔥 [해결 1] return 이전에 출처 버튼도 확실하게 숨기도록 위로 끌어올립니다.
+        citationBtn.hidden = deleteButton.hidden;
+        if (citationBtn.hidden) {
+            citationPcInput.hidden = true;
+        }
+
         if (deleteButton.hidden) return;
         
         const button = shadowButtons.get(selected);
@@ -387,6 +492,16 @@
         const tRect = node.getClientRect({ skipShadow: true });
         const rightX = canvasRect.left + tRect.x + tRect.width + 8; // 박스 우측 경계에서 8px 띄움
         const topY = canvasRect.top + tRect.y; // 박스 상단 위치
+
+        citationBtn.hidden = deleteButton.hidden;
+        if (!citationBtn.hidden) {
+            citationBtn.style.left = (canvasRect.left + tRect.x + tRect.width + 8) + 'px';
+            citationBtn.style.top = (canvasRect.top + tRect.y + tRect.height - 28) + 'px';
+            
+            // 입력폼은 c 버튼 바로 우측에 띄움
+            citationPcInput.style.left = (parseFloat(citationBtn.style.left) + 36) + 'px';
+            citationPcInput.style.top = (parseFloat(citationBtn.style.top) - 2) + 'px';
+        }
 
         layerUpBtn.style.left = rightX + 'px';
         layerUpBtn.style.top = topY + 'px';
@@ -416,6 +531,7 @@
     deleteButton.onclick = () => remove(selected);
     
     function commit(node) {
+        const size = getSize();
         const width = node.width() * node.scaleX(), height = node.height() * node.scaleY(); node.size({ width, height }); node.scale({ x: 1, y: 1 });
         const rect = node.getClientRect({ relativeTo: stage, skipShadow: true });
         if (rect.x + rect.width < 16) node.x(node.x() + 16 - rect.x - rect.width);
@@ -465,7 +581,8 @@
             
             const outlineImg = new K.Image({ name: 'outline', listening: false });
             const mainImg = new K.Image({ name: 'main' }); 
-            group.add(outlineImg, mainImg);
+            const textNode = new K.Text({ name: 'citation', listening: false }); // 텍스트 노드 추가
+            group.add(outlineImg, mainImg, textNode);
 
             const button = document.createElement('button'); button.type = 'button'; button.className = 'sticker-shadow-toggle sticker-shadow-canvas'; button.onclick = () => toggleShadow(item.id); document.body.append(button); shadowButtons.set(item.id, button);
             const outBtn = document.createElement('button'); outBtn.type = 'button'; outBtn.className = 'sticker-shadow-toggle sticker-outline-canvas'; outBtn.onclick = () => toggleOutline(item.id); document.body.append(outBtn); outlineButtons.set(item.id, outBtn);
@@ -486,6 +603,14 @@
 
                 layerUpBtn.hidden = true;
                 layerDownBtn.hidden = true;
+                
+                // 🔥 [해결 2] PC 출처 폼과 버튼을 숨깁니다.
+                citationBtn.hidden = true;
+                citationPcInput.hidden = true;
+
+                // 캔버스 텍스트 숨기기 (스케일/회전 시 찌그러짐 방지)
+                const citationNode = group.findOne('.citation');
+                if (citationNode) citationNode.hide();
             });
 
             // 3. 조작이 끝나면 commit 내부에서 위치를 재계산하고 버튼이 다시 나타납니다.
@@ -493,8 +618,6 @@
         }
         
         group.setAttrs({ x: item.x, y: item.y, width: item.width, height: item.height, rotation: item.rotation, scaleX: 1, scaleY: 1 }); 
-        // 배열의 앞쪽(인덱스가 낮을수록) Z-index 값을 높게 주어 맨 앞으로 가져옵니다.
-        group.zIndex(items.length - 1 - index); 
         group.setAttrs({ shadowEnabled: false });
         
         const main = group.findOne('.main');
@@ -511,6 +634,30 @@
         });
 
         outline.clearCache();
+        const citationNode = group.findOne('.citation');
+        if (item.citation && item.citation.trim() !== '') {
+            citationNode.setAttrs({
+                text: 'ⓒ ' + item.citation,
+                fontSize: 11,
+                fontFamily: 'pretendard',
+                fill: '#5f5f5f', // 회색 글자
+                shadowColor: '#000000', // 그림자 색상
+                shadowOpacity: 0.25, // 그림자 투명도 (rgba 0.25)
+                shadowBlur: 4, // 그림자 블러
+                shadowOffsetX: 0, // 그림자 X 위치
+                shadowOffsetY: 0, // 그림자 Y 위치
+                align: 'center',
+                width: item.width,
+                scaleX: 1,
+                scaleY: 1,
+                visible: true
+            });
+            // 이미지 하단 중앙에서 6px 위에 배치
+            citationNode.y(item.height - 6 - citationNode.height());
+        } else {
+            citationNode.hide();
+        }
+
         if (hasOutline) {
             if (!img._outlineCvs) img._outlineCvs = createOutlineCanvas(img, 10); //외곽선
             const scaleX = item.width / img.naturalWidth;
@@ -531,10 +678,20 @@
 
         const button = shadowButtons.get(item.id); button.textContent = hasShadow ? '그림자 삭제' : '그림자 추가'; button.setAttribute('aria-pressed', String(hasShadow)); button.setAttribute('aria-label', item.name + ' ' + button.textContent);
         const outBtn = outlineButtons.get(item.id); outBtn.textContent = hasOutline ? '외곽선 삭제' : '외곽선 추가'; outBtn.setAttribute('aria-pressed', String(hasOutline)); outBtn.setAttribute('aria-label', item.name + ' ' + outBtn.textContent);
-        });
+        }); // decoded.forEach 종료 지점
+        
+        // 🔥 [해결 로직] 모든 스티커가 캔버스에 올라간 후, 순서대로 차곡차곡 쌓아 올립니다.
+        // 배열의 맨 끝(바닥)부터 맨 앞(인덱스 0) 순서로 맨 위로 끌어올리면, 최종적으로 0번이 가장 위에 놓입니다.
+        for (let i = items.length - 1; i >= 0; i--) {
+            const group = nodes.get(items[i].id);
+            if (group) group.moveToTop();
+        }
         
         if (selected && !nodes.has(selected)) selected = null;
-        transformer.nodes(selected ? [nodes.get(selected)] : []); transformer.moveToTop(); positionDelete(); layer.batchDraw();
+        transformer.nodes(selected ? [nodes.get(selected)] : []); 
+        transformer.moveToTop(); // 선택 박스를 가장 마지막에 최상단으로 끌어올림
+        positionDelete(); 
+        layer.batchDraw();
     }
     
     compact.addEventListener('change', () => { transformer.anchorSize(compact.matches ? 16 : 10); positionDelete(); layer.batchDraw(); });
@@ -549,8 +706,9 @@
         if (store.state.stickers.length >= MAX_STICKERS) throw new Error(`스티커는 최대 ${MAX_STICKERS}개까지 추가할 수 있어요.`);
         const img = await decodeImage(src), scale = Math_min(300 / img.naturalWidth, 300 / img.naturalHeight);
         const id = crypto.randomUUID(), width = img.naturalWidth * scale, height = img.naturalHeight * scale;
+        const size = getSize();
         
-        store.change(s => s.stickers.unshift({ id, name, src, x: (size.width - width) / 2, y: (size.height - height) / 2, width, height, rotation: 0, shadow: false, outline: false }), 'stickers');
+        store.change(s => s.stickers.unshift({ id, name, src, x: (size.width - width) / 2, y: (size.height - height) / 2, width, height, rotation: 0, shadow: false, outline: false, citation: '' }), 'stickers');
         await render(); select(id); notify('스티커를 추가했어요. 캔버스에서 이동·크기 조절·회전할 수 있어요.');
         }
     };

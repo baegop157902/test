@@ -33,12 +33,16 @@ export async function readImage(file) {
   return canvas.toDataURL('image/png');
 }
 export async function validateState(raw,definition) {
-  const {templateId:id,initialState,fonts=[],positions={},size}=definition;
+  const {templateId:id,initialState,fonts=[]}=definition;
   if(!raw || raw.schemaVersion!==1 || raw.templateId!==id)throw new Error('현재 템플릿의 편집 파일이 아니에요.');
+  raw=definition.migrateState?.(raw)??raw;
   let next=initialState(id);
   if(definition.restoreState) next=await definition.restoreState(raw,next);
+  const positions=definition.getPositions?.(next)??definition.positions??{};
+  const size=definition.getSize?.(next)??definition.size;
   const fieldTypes=new Map();
   const radioOptions=new Map();
+  const numberFields=new Map();
   const tabs=typeof definition.tabs==='function'?definition.tabs(next):definition.tabs;
   for(const tab of tabs){
     if(tab.type==='action'||tab.type==='stickers')continue;
@@ -46,12 +50,19 @@ export async function validateState(raw,definition) {
     const groups=typeof source==='function'?source(next,tab.id):source;
     for(const [group] of groups)for(const field of definition.fields(tab.id,group,next)){
       fieldTypes.set(field.id,field.type);
+      if(field.type==='number')numberFields.set(field.id,field);
       if(field.type==='radio')radioOptions.set(field.id,field.options.map(option=>option.value));
     }
   }
   if(!raw.values || !raw.images || !Array.isArray(raw.stickers) || raw.stickers.length>MAX_STICKERS)throw new Error('편집 파일 형식이 올바르지 않아요.');
   for(const [key,def] of Object.entries(next.values)) {
     const value=raw.values[key] ?? def;
+    if(fieldTypes.get(key)==='number'){
+      const number=typeof value==='number'?value:typeof value==='string'&&value.trim()!==''?Number(value):NaN;
+      const field=numberFields.get(key);
+      if(!Number.isFinite(number)||number<field.min||number>field.max)throw new Error('숫자 값이 범위를 벗어났어요.');
+      next.values[key]=number;next.touched[key]=raw.touched?.[key]===true;continue;
+    }
     if(fieldTypes.get(key)==='checkbox'){
       if(typeof value!=='boolean')throw new Error('체크박스 값이 올바르지 않아요.');
       next.values[key]=value;next.touched[key]=raw.touched?.[key]===true;
@@ -73,7 +84,7 @@ export async function validateState(raw,definition) {
     for(const key of ['x','y','width','height','rotation'])if(!Number.isFinite(item[key]))throw new Error('스티커 좌표가 올바르지 않아요.');
     if(item.width<8 || item.height<8 || item.width>Math.max(size.width,size.height)*2 || item.height>Math.max(size.width,size.height)*2 || Math.abs(item.x)>Math.max(size.width,size.height)*3 || Math.abs(item.y)>Math.max(size.width,size.height)*3 || Math.abs(item.rotation)>36000)throw new Error('스티커 크기·위치가 범위를 벗어났어요.');
     await decodeImage(item.src); ids.add(item.id);
-    next.stickers.push({id:item.id,src:item.src,name:String(item.name||'스티커').slice(0,100),x:item.x,y:item.y,width:item.width,height:item.height,rotation:item.rotation,shadow:item.shadow===true,outline: item.outline === true});
+    next.stickers.push({id:item.id,src:item.src,name:String(item.name||'스티커').slice(0,100),x:item.x,y:item.y,width:item.width,height:item.height,rotation:item.rotation,shadow:item.shadow===true,outline: item.outline === true, citation: String(item.citation || '').slice(0, 100)});
   }
   return next;
 }

@@ -46,20 +46,69 @@
         </section>
 
         <section id="template-gallery" aria-label="페어틀 목록">
+            <!-- 심플 페어정리 -->
             <a href="editor.html?id=2p-simple" class="template-card">
-                <img src="images/2psimple-1.png" alt="심플 페어정리">
+                <img
+                    class="random-thumbnail"
+                    src="images/2p-simple-1.png"
+                    data-images="
+                        images/2p-simple-1.png, 
+                        images/2p-simple-2.png,
+                        images/2p-simple-3.png,
+                        images/2p-simple-4.jpg
+                        "
+                    alt="심플 페어정리"
+                >
                 <span class="template-tag template-tag--red">#자료정리</span>
                 <strong class="template-title">심플 페어정리</strong>
             </a>
+            <!-- 페어정리1 -->
             <a href="editor.html?id=2p-pair1" class="template-card">
-                <img src="images/sample2.png" alt="배고픔 페어정리1">
+                <img
+                    class="random-thumbnail"
+                    src="images/2p-pair1-1.png"
+                    data-images="
+                        images/2p-pair1-1.png,
+                        images/2p-pair1-2.png,
+                        images/2p-pair1-3.png
+                        "
+                    alt="페어정리"
+                >
                 <span class="template-tag template-tag--red">#자료정리</span>
                 <strong class="template-title">배고픔 페어정리1</strong>
             </a>
+            <!-- 패턴헤더 -->
             <a href="editor.html?id=pattern-header" class="template-card">
-                <img src="images/sample3.png" alt="패턴 헤더">
+                <img
+                    class="random-thumbnail"
+                    src="images/pattern-header-1.png"
+                    data-images="
+                        images/pattern-header-1.png, 
+                        images/pattern-header-2.png,
+                        images/pattern-header-3.jpg,
+                        images/pattern-header-4.png,
+                        images/pattern-header-5.png,
+                        images/pattern-header-6.png,
+                        images/pattern-header-7.png,
+                        images/pattern-header-8.png
+                        "
+                    alt="패턴 헤더"
+                >
                 <span class="template-tag template-tag--green">#헤더</span>
                 <strong class="template-title">패턴 헤더</strong>
+            </a>
+            <!-- 30인 자료 -->
+            <a href="editor.html?id=30p-pair" class="template-card">
+                <img
+                    class="random-thumbnail"
+                    src="images/30p-pair-1.png"
+                    data-images="
+                        images/30p-pair-1.png
+                        "
+                    alt="다인 자료틀(1~30명)"
+                >
+                <span class="template-tag template-tag--red">#자료정리</span>
+                <strong class="template-title">다인 자료틀(1~30명)</strong>
             </a>
         </section>
     </main>
@@ -142,6 +191,17 @@
         } else {
             mobileQuery.addListener(updateGallery);
         }
+    </script>
+    <script>
+        document.querySelectorAll(".random-thumbnail").forEach(image => {
+            const imageList = image.dataset.images
+            .split(",")
+            .map(path => path.trim());
+
+            const randomIndex = Math.floor(Math.random() * imageList.length);
+
+            image.src = imageList[randomIndex];
+        });
     </script>
     <script src="js/script.js"></script>
 </body>
