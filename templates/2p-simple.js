@@ -130,7 +130,7 @@ export function fields(side, group) {
                     visibleWhen: `${side}-${group}-background-enabled` }
             ];
         case 'name':
-            return [field('korea-name', '이름'), field('korea-name-color', '이름 색상', 'color'), field('etc-name', '캐치프레이즈'), field('etc-name-color', '캐치프레이즈 색상', 'color'), field('sub-font', '캐치프레이즈 폰트', 'font')];
+            return [field('korea-name', '이름'), field('korea-name-color', '이름 색상', 'color'), field('etc-name', '캐치프레이즈'), field('etc-name-color', '캐치프레이즈 색상', 'color'), field('sub-font', '캐치프레이즈 폰트', 'font'), field('small-check', '더 작은 텍스트', 'checkbox')];
         case 'description':
             return [field('clothes', '평소의상', 'textarea'), field('charac', '외관특징', 'textarea'), field('cm', '키 (cm)'), field('animal', '모에화')];
         case 'colors':
@@ -160,6 +160,7 @@ export function initialState(id = templateId) {
             [`${side}-korea-name`]: '이름',
             [`${side}-etc-name`]: 'Name',
             [`${side}-sub-font`]: 'Pretendard',
+            [`${side}-small-check`]: false,
             [`${side}-korea-name-color`]: '#323232',
             [`${side}-etc-name-color`]: '#323232',
             [`${side}-clothes`]: '여기에 설명을 적어주세요.',
@@ -202,6 +203,7 @@ export function createPairScene(stage, openEditor) {
     layer.add(ld, gradients, boxes, content);
     const imageNodes = new Map(),
         textBindings = [],
+        nameSizeBindings = [],
         colorBindings = [];
     let currentValues = initialState().values;
     function updateBackground(id, item) {
@@ -383,7 +385,7 @@ export function createPairScene(stage, openEditor) {
         const left = side === 'left',
             x = left ? 500 : 994,
             align = left ? 'left' : 'right';
-        text({
+        const nameText = text({
             x,
             y: 80,
             width: 424,
@@ -395,7 +397,7 @@ export function createPairScene(stage, openEditor) {
             text: `${side}-korea-name`,
             color: `${side}-korea-name-color`
         }, side, 'name');
-        text({
+        const catchphraseText = text({
             x,
             y: 122,
             width: 430,
@@ -409,6 +411,7 @@ export function createPairScene(stage, openEditor) {
             color: `${side}-etc-name-color`,
             font: `${side}-sub-font`
         }, side, 'name');
+        nameSizeBindings.push({side, nameText, catchphraseText});
         text({
             x: left ? 333 : 1516,
             y: 269,
@@ -540,6 +543,11 @@ export function createPairScene(stage, openEditor) {
                 if (b.font) node.fontFamily(values[b.font]);
             }
             for (const [node, key] of colorBindings) node.fill(values[key]);
+            for (const {side, nameText, catchphraseText} of nameSizeBindings) {
+                const small = values[`${side}-small-check`] === true;
+                nameText.setAttrs({y: small ? 100 : 80, fontSize: small ? 24 : 32});
+                catchphraseText.setAttrs({y: small ? 136 : 122, fontSize: small ? 28 : 48});
+            }
             layer.batchDraw();
         },
         updateImage(id, img) {
